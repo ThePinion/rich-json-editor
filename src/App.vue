@@ -1,20 +1,28 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+    <Vue2AceEditor
+      v-model="content"
+      @init="initEditor"
+      lang="json"
+      theme="chrome"
+      width="100%"
+      height="200"
+    />
+    {{ content }}
   </div>
 </template>
 
-<script lang="ts">
-import Vue from "vue";
-import HelloWorld from "./components/HelloWorld.vue";
+<script lang="ts" setup>
+import { ref } from "vue";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Vue2AceEditor = require("./components/AceWraper.js");
 
-export default Vue.extend({
-  name: "App",
-  components: {
-    HelloWorld,
-  },
-});
+function initEditor(editor: any) {
+  // require("brace/mode/json");
+  // require("brace/theme/chrome");
+}
+
+let content = ref("");
 </script>
 
 <style>
