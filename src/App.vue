@@ -106,9 +106,8 @@ function saveJs() {
     .slice(0, -1)
     .reduce((prev, cur) => prev[cur], jsonObject);
 
-  tempObject[requiredPathArray[requiredPathArray.length - 1]] = jsContent.value
-    .replace(/"/g, '\\"')
-    .split("\n");
+  tempObject[requiredPathArray[requiredPathArray.length - 1]] =
+    jsContent.value.split("\n");
   jsonContent.value = JSON.stringify(jsonObject, null, 2);
   editingJs.value = false;
   content.value = jsonContent.value;
