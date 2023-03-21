@@ -28,6 +28,11 @@ class JsonPath {
       .map((el) => (typeof el === "number" ? "[" + el + "]" : "." + el))
       .reduce((prev, cur) => prev + cur, "");
   }
+
+  public matches(required: Array<string>) {
+    if (this._elements.length < required.length) return false;
+    return required.every((el, index) => this._elements[index].value == el);
+  }
 }
 
 export default function pathAtCursorLocation(

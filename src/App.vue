@@ -1,32 +1,32 @@
 <template>
   <div
-    id="app"
     v-on:keydown.ctrl.69.capture.prevent.stop="startEditingJs"
     v-on:keydown.ctrl.83.capture.prevent.stop="saveJs"
   >
-    <div style="width: 100%">
+    <div style="padding: 10px; border: 5px dotted red; margin: 20px">
       <ul>
         <b>TODO:</b>
         <li>Add an uneditable function signature</li>
-        <li>Make json paths easly declarative</li>
+        <li>Support multiple paths</li>
         <li>Add json schema support</li>
       </ul>
       <p>
-        When cursor inside path: ".address.location.customJavascript" to edit
-        javascritp press:
-        <br />&nbsp;&nbsp;Ctrl+Shift+e or click the button<br />
+        When cursor inside (editable) path:
+        <input v-model="requiredPath" style="width: 100%" /> to edit javascritp
+        press: <br />&nbsp;&nbsp;Ctrl+Shift+e or click the button<br />
         Then to save:
         <br />&nbsp;&nbsp;Ctrl+Shift+s or click the button
       </p>
-      <button v-if="editingJs" @click="saveJs">Save</button>
-      <button
-        v-else
-        :disabled="!isInsideCustomJavascript"
-        @click="startEditingJs"
-      >
-        Edit javascript
-      </button>
     </div>
+
+    <button v-if="editingJs" @click="saveJs">Save</button>
+    <button
+      v-else
+      :disabled="!isInsideCustomJavascript"
+      @click="startEditingJs"
+    >
+      Edit javascript
+    </button>
 
     <Vue2AceEditor
       v-model="content"
@@ -85,18 +85,31 @@ const path = ref();
 const editingJs = ref(false);
 const jsContent = ref("");
 
-const isInsideCustomJavascript = computed(() =>
-  path.value?.toString().includes(".address.location.customJavascript")
-);
+const requiredPath = ref("address.location.customJavascript");
+
+const isInsideCustomJavascript = computed(() => {
+  return path.value?.matches(getRequiredPathArray());
+});
+
+function getRequiredPathArray() {
+  return requiredPath.value.split(".").map((el) => el.trim());
+}
 
 function saveJs() {
   if (!editingJs) return;
-  let tempObject = JSON.parse(jsonContent.value);
 
-  tempObject.address.location.customJavascript = jsContent.value
+  const jsonObject = JSON.parse(jsonContent.value);
+
+  const requiredPathArray = getRequiredPathArray();
+
+  let tempObject = requiredPathArray
+    .slice(0, -1)
+    .reduce((prev, cur) => prev[cur], jsonObject);
+
+  tempObject[requiredPathArray[requiredPathArray.length - 1]] = jsContent.value
     .replace(/"/g, '\\"')
     .split("\n");
-  jsonContent.value = JSON.stringify(tempObject, null, 2);
+  jsonContent.value = JSON.stringify(jsonObject, null, 2);
   editingJs.value = false;
   content.value = jsonContent.value;
 }
@@ -104,8 +117,9 @@ function saveJs() {
 function startEditingJs() {
   if (!isInsideCustomJavascript) return;
   editingJs.value = true;
-  content.value = JSON.parse(jsonContent.value)
-    .address.location.customJavascript.map((el: string) => el)
+  content.value = getRequiredPathArray()
+    .reduce((prev, cur) => prev[cur], JSON.parse(jsonContent.value))
+    .map((el: string) => el)
     .reduce((prev: string, cur: string) => prev + cur + "\n", "")
     .slice(0, -1);
 }
@@ -121,18 +135,18 @@ function handleInput(value: string) {
 function cursorEmitReceiver(cursor: Cursor) {
   try {
     path.value = pathAtCursorLocation(jsonContent.value, cursor);
-  } catch (e) {
-    console.log(e);
+  } catch {
+    return;
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  margin-top: 60px;
+button {
+  background-color: green;
+  color: white;
+}
+button:disabled {
+  background-color: grey;
 }
 </style>
