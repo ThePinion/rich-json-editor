@@ -30,6 +30,7 @@ class JsonPath {
   }
 
   public matches(required: Array<string>) {
+    if (!required.length) return false;
     if (this._elements.length < required.length) return false;
     return required.every((el, index) => this._elements[index].value == el);
   }
