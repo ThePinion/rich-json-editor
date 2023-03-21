@@ -43,9 +43,8 @@ module.exports = {
       this.editor.setTheme("ace/theme/" + newTheme);
     },
     lang: function (newLang) {
-      this.editor
-        .getSession()
-        .setMode(typeof newLang === "string" ? "ace/mode/" + newLang : newLang);
+      requireMode(newLang);
+      this.editor.getSession().setMode("ace/mode/" + newLang);
     },
     options: function (newOption) {
       this.editor.setOptions(newOption);
@@ -78,10 +77,13 @@ module.exports = {
 
     this.$emit("init", editor);
 
-    //editor.setOption("enableEmmet", true);
-    require("brace/mode/" + lang);
+    editor.setOption("enableEmmet", true);
+
     require("brace/theme/" + theme);
+
+    requireMode(lang);
     editor.getSession().setMode("ace/mode/" + lang);
+
     editor.setTheme("ace/theme/" + theme);
     if (this.value) editor.setValue(this.value, 1);
     this.contentBackup = this.value;
@@ -91,6 +93,26 @@ module.exports = {
       vm.$emit("input", content);
       vm.contentBackup = content;
     });
+    editor.session.selection.on("changeCursor", () => {
+      this.$emit("cursor", editor.selection.getCursor());
+    });
+    editor.commands.addCommand({
+      name: "insertButton",
+      exec: function (editor) {
+        var buttonHtml = '<button type="button">Click Me!</button>';
+        editor.insert(buttonHtml);
+      },
+      bindKey: { win: "Ctrl-B", mac: "Command-B" }, // optional keybinding
+    });
     if (vm.options) editor.setOptions(vm.options);
   },
 };
+
+function requireMode(lang) {
+  if (lang == "rich_json") {
+    require("brace/mode/json");
+    require("/src/lib/rich-json-mode");
+  } else {
+    require("brace/mode/" + lang);
+  }
+}
