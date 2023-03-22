@@ -4,11 +4,23 @@ export interface Cursor {
   row: number;
   column: number;
 }
-export interface JsonPathElement {
+
+export class JsonPathElement {
   value: string | number;
+  constructor(value: string | number) {
+    this.value = value;
+  }
+  toString() {
+    return typeof this.value === "number" ? "[" + this.value + "]" : this.value;
+  }
+
+  matches(str: string) {
+    if (str == "[*]" && typeof this.value === "number") return true;
+    return this.toString() == str;
+  }
 }
 
-class JsonPath {
+export class JsonPath {
   private _elements: Array<JsonPathElement>;
   public get elements(): Array<JsonPathElement> {
     return this._elements;
@@ -18,37 +30,30 @@ class JsonPath {
     this._elements = elements;
   }
 
-  public push(key: string | number) {
-    this._elements.push({ value: key });
-  }
-
-  public toString() {
-    return this.elements
-      .map((el) => el.value)
-      .map((el) => (typeof el === "number" ? "[" + el + "]" : "." + el))
-      .reduce((prev, cur) => prev + cur, "");
+  public push(element: string | number) {
+    this._elements.push(new JsonPathElement(element));
   }
 
   public matches(required: Array<string>) {
     if (!required.length) return false;
     if (this._elements.length < required.length) return false;
-    return required.every((el, index) => this._elements[index].value == el);
+    return required.every((r, index) => this._elements[index].matches(r));
   }
 }
 
-export default function pathAtCursorLocation(
+export function pathAtCursorLocation(
   jsonString: string,
   cursor: Cursor
 ): JsonPath {
   const tokens = parse(jsonString, { loc: true });
-  return getPathForLocationRecursevly(
+  return getPathForLocationRecursively(
     { column: cursor.column + 1, row: cursor.row + 1 },
     new JsonPath([]),
     tokens
   );
 }
 
-function getPathForLocationRecursevly(
+function getPathForLocationRecursively(
   cursor: Cursor,
   path: JsonPath,
   node: ValueNode
@@ -57,7 +62,7 @@ function getPathForLocationRecursevly(
     const child = node.children.find((c) => c.loc && inBounds(cursor, c.loc));
     if (!child) return path;
     path.push(child.key.value);
-    return getPathForLocationRecursevly(cursor, path, child.value);
+    return getPathForLocationRecursively(cursor, path, child.value);
   }
   if (node.type === "Array") {
     const childIndex = node.children.findIndex(
@@ -65,7 +70,7 @@ function getPathForLocationRecursevly(
     );
     if (childIndex == -1) return path;
     path.push(childIndex);
-    return getPathForLocationRecursevly(
+    return getPathForLocationRecursively(
       cursor,
       path,
       node.children[childIndex]
@@ -75,19 +80,11 @@ function getPathForLocationRecursevly(
 }
 
 function inBounds(cursor: Cursor, bounds: Location) {
-  if (
-    !(
-      bounds.start.line < cursor.row ||
-      (bounds.start.line === cursor.row && bounds.start.column <= cursor.column)
-    )
-  )
+  if (bounds.start.line > cursor.row) return false;
+  if (bounds.end.line < cursor.row) return false;
+  if (bounds.start.line == cursor.row && bounds.start.column > cursor.column)
     return false;
-  if (
-    !(
-      bounds.end.line > cursor.row ||
-      (bounds.end.line === cursor.row && bounds.end.column >= cursor.column)
-    )
-  )
+  if (bounds.end.line == cursor.row && bounds.end.column < cursor.column)
     return false;
   return true;
 }
