@@ -27,7 +27,9 @@ export default {
   },
   methods: {
     setEditorTheme: async function (newTheme) {
-      await import("brace/theme/" + newTheme);
+      await import(
+        /* webpackChunkName: "theme-[request]" */ "brace/theme/" + newTheme
+      );
       this.editor.setTheme("ace/theme/" + newTheme);
     },
     setEditorLang: async function (newLang) {
@@ -97,7 +99,7 @@ export default {
   mounted: async function () {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
 
-    await import("brace/ext/emmet");
+    await import(/* webpackChunkName: "emmet" */ "brace/ext/emmet");
 
     this.editor = ace.edit(this.$el);
     var editor = this.editor;
@@ -141,9 +143,11 @@ export default {
 
 async function requireMode(lang) {
   if (lang == "rich_json") {
-    await import("brace/mode/json");
-    await import("/src/lib/rich-json-mode");
+    await import(/* webpackChunkName: "mode-rich_json." */ "brace/mode/json");
+    await import(
+      /* webpackChunkName: "mode-rich_json." */ "/src/lib/rich-json-mode"
+    );
   } else {
-    await import("brace/mode/" + lang);
+    await import(/* webpackChunkName: "mode-[request]" */ "brace/mode/" + lang);
   }
 }
