@@ -1,5 +1,11 @@
 # rich-json-editor
 
+To remove the unnecessary bundles you can run the following (PowerShell) command in the build directory:
+```PowerShell
+Get-ChildItem | Where-Object { $_.Name -match "^.*json.*(?:mode|theme)(?!.*(sqlserver|-json\.|rich_json|javascript|chrome).*).*$" } | del
+```
+```sqlserver```, ```json```, ```javascript```, ```chrome``` are the ```modules``` or ```themes``` that will be preserved.
+
 ## Project setup
 ```
 yarn install
