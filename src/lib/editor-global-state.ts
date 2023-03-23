@@ -5,33 +5,52 @@ import {
   toSidePathArray,
 } from "./editor-side-path";
 import { EditorSideState } from "./editor-side-state";
+import { CurrentPath } from "./editor-state";
 import { Cursor, JsonPath, pathAtCursorLocation } from "./path-finder";
+
+export const RICH_JSON = "rich_json";
 
 export class EditorGlobalState {
   content: string;
   cursor: Cursor;
   sidePaths: Array<SidePath>;
-  constructor(initialContent: string, sidePaths: Array<SidePathDefinition>) {
+  lang: string;
+  constructor(
+    initialContent: string,
+    sidePaths: Array<SidePathDefinition> | undefined,
+    lang: string | undefined
+  ) {
     this.content = initialContent;
-    this.content = JSON.stringify(this.getContentObject(), null, 4);
     this.cursor = { row: 0, column: 0 } as Cursor;
-    this.sidePaths = sidePaths.flatMap((d) => toSidePathArray(d));
+    this.sidePaths = sidePaths?.flatMap((d) => toSidePathArray(d)) ?? [];
+
+    this.lang = lang ?? RICH_JSON;
+    if (this.lang == RICH_JSON)
+      try {
+        this.content = JSON.stringify(this.getContentObject(), null, 4);
+      } catch {
+        //
+      }
   }
 
-  public findMatchingPath(): SidePath | undefined {
+  public findCurrentPath(): CurrentPath {
+    if (this.lang != RICH_JSON) return new CurrentPath(undefined);
     let currentPath: JsonPath;
     try {
       currentPath = pathAtCursorLocation(this.content, this.cursor);
     } catch {
-      return undefined;
+      return new CurrentPath(undefined);
     }
 
     const found = this.sidePaths.find((sp) => currentPath.matches(sp.path));
-    if (!found) return undefined;
-    return found.copyWithPath(
-      currentPath.elements
-        .slice(0, found.path.length)
-        .map((el) => el.toString())
+    if (!found) return new CurrentPath(currentPath);
+
+    return new CurrentPath(
+      found.copyWithPath(
+        currentPath.elements
+          .slice(0, found.path.length)
+          .map((el) => el.toString())
+      )
     );
   }
 

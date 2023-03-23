@@ -1,7 +1,7 @@
 import { EditorGlobalState } from "./editor-global-state";
+import { SidePath } from "./editor-side-path";
 import { EditorSideState } from "./editor-side-state";
-
-const RICH_JSON = "rich_json";
+import { JsonPath } from "./path-finder";
 
 export class EditorState {
   public content: string;
@@ -18,8 +18,12 @@ export class EditorState {
     return this.side ? "side" : "global";
   }
 
-  public get sideSwichable(): boolean {
-    return !this.side && !!this.global.findMatchingPath();
+  public get currentPath(): CurrentPath {
+    if (this.side) return new CurrentPath(this.side.path, false);
+    return this.global.findCurrentPath();
+
+    // const matc
+    // return !this.side && !!this.global.findMatchingPath();
   }
 
   public get disableTop(): number {
@@ -33,10 +37,11 @@ export class EditorState {
   public switchToSideMode() {
     if (this.side)
       throw "EDITOR: Must be in global mode to switch to side mode!";
-    const matchedPath = this.global.findMatchingPath();
-    if (!matchedPath) throw "EDITOR: Must be inside one of matching paths!";
+    const matchedPath = this.global.findCurrentPath();
+    if (!matchedPath.matched)
+      throw "EDITOR: Must be inside one of matching paths!";
 
-    this.side = this.global.getSideState(matchedPath);
+    this.side = this.global.getSideState(matchedPath.matched);
     this.content = this.side.content;
   }
 
@@ -55,6 +60,24 @@ export class EditorState {
   }
 
   public get lang(): string {
-    return this.side?.lang ?? RICH_JSON;
+    return this.side?.lang ?? this.global.lang;
+  }
+}
+
+export class CurrentPath {
+  private _path: SidePath | JsonPath | undefined;
+  private _matched: boolean;
+
+  constructor(path: SidePath | JsonPath | undefined, matched = true) {
+    this._path = path;
+    this._matched = path instanceof SidePath && matched;
+  }
+
+  public get matched() {
+    return this._matched ? (this._path as SidePath) : undefined;
+  }
+
+  public toString() {
+    return this._path?.toString();
   }
 }

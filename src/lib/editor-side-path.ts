@@ -49,6 +49,10 @@ export class SidePath {
       content += "\n" + arrayToString(this.context.bottom).slice(0, -1) + "\n";
     return content;
   }
+
+  public toString() {
+    return arrayToString(this.path.map(strToChainedKey), "");
+  }
 }
 
 export function toSidePathArray(
@@ -72,15 +76,19 @@ function strToKey(str: string): string | number {
   return str;
 }
 
+function strToChainedKey(str: string) {
+  return typeof strToKey(str) === "number" ? str : "." + str;
+}
+
 function toStringArray(val: Array<string> | string): Array<string> {
   return Array.isArray(val) ? val : [val];
 }
 
-export function arrayToString(val: Array<string>): string {
+export function arrayToString(val: Array<string>, joiner = "\n"): string {
   if (val.length == 0) return "";
   return val
-    .reduce((prev: string, cur: string) => prev + cur + "\n", "")
-    .slice(0, -1);
+    .reduce((prev: string, cur: string) => prev + cur + joiner, "")
+    .slice(0, joiner.length > 0 ? -joiner.length : undefined);
 }
 
 function newSidePath(
@@ -89,10 +97,12 @@ function newSidePath(
   folding: FoldingType,
   context: SidePathContext
 ) {
-  const pathArray = path
+  let pathArray = path
     .replaceAll("[", ".[")
     .split(".")
     .map((el) => el.trim());
+  if (pathArray.length > 0 && pathArray[0] == ".")
+    pathArray = pathArray.slice(1, undefined);
   return new SidePath(
     pathArray,
     lang,

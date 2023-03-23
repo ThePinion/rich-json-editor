@@ -109,7 +109,7 @@ export default {
     this.setEditorLang(this.lang ?? "text");
 
     editor.setOption("enableEmmet", true);
-
+    editor.setShowPrintMargin(false);
     editor.setValue(this.value ?? "", 1);
 
     if (this.options) editor.setOptions(this.options);
@@ -137,6 +137,10 @@ export default {
         this.calculateReadOnly(range.start.row) ||
           this.calculateReadOnly(range.end.row)
       );
+    });
+
+    editor.session.on("changeAnnotation", () => {
+      this.$emit("annotations", editor.session.getAnnotations());
     });
   },
 };

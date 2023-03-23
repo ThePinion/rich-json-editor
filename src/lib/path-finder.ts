@@ -1,4 +1,5 @@
 import parse, { ValueNode, Location } from "json-to-ast";
+import { arrayToString } from "./editor-side-path";
 
 export interface Cursor {
   row: number;
@@ -12,6 +13,12 @@ export class JsonPathElement {
   }
   toString() {
     return typeof this.value === "number" ? "[" + this.value + "]" : this.value;
+  }
+
+  toChainedString() {
+    return typeof this.value === "number"
+      ? this.toString()
+      : "." + this.toString();
   }
 
   matches(str: string) {
@@ -38,6 +45,13 @@ export class JsonPath {
     if (!required.length) return false;
     if (this._elements.length < required.length) return false;
     return required.every((r, index) => this._elements[index].matches(r));
+  }
+
+  public toString() {
+    return arrayToString(
+      this.elements.map((e) => e.toChainedString()),
+      ""
+    );
   }
 }
 
