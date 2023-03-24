@@ -24,7 +24,8 @@ export class JsonPathElement {
   }
 
   matches(str: string) {
-    if (str == "*") return true;
+    if (str == "**") return true;
+    if (str == "*" && typeof this.key === "string") return true;
     if (str == "[*]" && typeof this.key === "number") return true;
     return this.toString() == str;
   }
