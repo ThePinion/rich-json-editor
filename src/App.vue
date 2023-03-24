@@ -68,7 +68,10 @@ const jsonContent = ref(`{
     {
       "a": "return 0"
     }
-  ]
+  ],
+  "any": {
+    "js": "return 4;"
+  }
 }`);
 
 const paths = ref<Array<SidePathDefinition>>([
@@ -77,6 +80,7 @@ const paths = ref<Array<SidePathDefinition>>([
       "address.location.customJavascript",
       "customJavascript",
       "table[*].a",
+      "*.js",
     ],
     lang: "javascript",
     folding: "auto",
