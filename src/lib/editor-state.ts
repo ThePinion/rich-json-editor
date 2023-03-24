@@ -7,11 +7,13 @@ export class EditorState {
   public content: string;
   public global: EditorGlobalState;
   public side: EditorSideState | null;
+  public options: EditorStateOptions;
 
-  constructor(globalState: EditorGlobalState) {
+  constructor(globalState: EditorGlobalState, options: EditorStateOptions) {
     this.content = globalState.content;
     this.global = globalState;
     this.side = null;
+    this.options = options;
   }
 
   public get mode(): "global" | "side" {
@@ -48,8 +50,12 @@ export class EditorState {
   public switchToGlobalMode(save = true) {
     if (!this.side)
       throw "EDITOR: Must be in side mode to switch to global mode!";
+
     const sideState = this.side;
-    if (save) this.global.saveSideState(sideState);
+    if (save) {
+      if (!this.isSideSavable) throw "EDITOR: Side is currently not savable!";
+      this.global.saveSideState(sideState);
+    }
     this.content = this.global.content;
     this.side = null;
   }
@@ -57,6 +63,12 @@ export class EditorState {
   public setModeContent(value: string) {
     if (!this.side) this.global.content = value;
     else this.side.content = value;
+  }
+
+  public get isSideSavable() {
+    if (!this.side) return false;
+    if (!this.options.onlySaveValidSide) return true;
+    return this.side.annotations.find((a) => a.type == "error") == undefined;
   }
 
   public get lang(): string {
@@ -80,4 +92,8 @@ export class CurrentPath {
   public toString() {
     return this._path?.toString();
   }
+}
+
+export interface EditorStateOptions {
+  onlySaveValidSide: boolean;
 }

@@ -8,6 +8,7 @@
       @mode="(e) => (isGlobal = e == 'global')"
       style="height: 400px"
       @annotations="logAnnotations"
+      :options="{ onlySaveValidSide: true }"
     />
 
     <p>SqlServer mode. Growable editor.</p>

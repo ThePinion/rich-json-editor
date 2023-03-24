@@ -15,19 +15,25 @@ export class EditorGlobalState {
   cursor: Cursor;
   sidePaths: Array<SidePath>;
   lang: string;
+  options: EditorGlobalStateOptions;
   constructor(
     initialContent: string,
     sidePaths: Array<SidePathDefinition> | undefined,
-    lang: string | undefined
+    lang: string | undefined,
+    options: EditorGlobalStateOptions
   ) {
     this.content = initialContent;
     this.cursor = { row: 0, column: 0 } as Cursor;
     this.sidePaths = sidePaths?.flatMap((d) => toSidePathArray(d)) ?? [];
-
+    this.options = options;
     this.lang = lang ?? RICH_JSON;
     if (this.lang == RICH_JSON)
       try {
-        this.content = JSON.stringify(this.getContentObject(), null, 4);
+        this.content = JSON.stringify(
+          this.getContentObject(),
+          null,
+          options.tabSize
+        );
       } catch {
         //
       }
@@ -83,6 +89,10 @@ export class EditorGlobalState {
       .reduce((prev, cur) => prev[cur], contentObject);
     tempObject[sideState.path.getLastElementKey()] =
       sideState.getFoldedContent();
-    this.content = JSON.stringify(contentObject, null, 4);
+    this.content = JSON.stringify(contentObject, null, this.options.tabSize);
   }
+}
+
+export interface EditorGlobalStateOptions {
+  tabSize: number;
 }

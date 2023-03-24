@@ -1,12 +1,15 @@
+import { Annotation } from "./annotation";
 import { SidePath, arrayToString } from "./editor-side-path";
 
 export class EditorSideState {
   content: string;
   path: SidePath;
+  annotations: Array<Annotation>;
 
   constructor(initialContent: string, path: SidePath) {
     this.content = path.wrapContentWithContext(initialContent);
     this.path = path;
+    this.annotations = [];
   }
 
   public get lang() {

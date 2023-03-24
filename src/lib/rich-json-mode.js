@@ -51,6 +51,7 @@ ace.define(
 
     var RichJsonMode = function () {
       this.HighlightRules = RichJsonHighlightRules;
+      this.foldingRules = new JsonMode().foldingRules;
       this.$outdent = new MatchingBraceOutdent();
       this.$behaviour = new CstyleBehaviour();
     };

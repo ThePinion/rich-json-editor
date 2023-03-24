@@ -19,6 +19,7 @@
           class="action-button"
           @click="switchToGlobal(true)"
           title="Ctrl+Shift+s"
+          :disabled="!editorState.isSideSavable"
         >
           <slot name="save">Save</slot>
         </button>
@@ -45,6 +46,7 @@
       :minLines="minLines"
       :disableTop="editorState.disableTop"
       :disableBottom="editorState.disableBottom"
+      :options="{ tabSize: options.tabSize, useSoftTabs: true }"
       @input="inputReceiver"
       @cursor="cursorReceiver"
       @annotations="annotationsReceiver"
@@ -60,6 +62,7 @@ import { EditorState } from "@/lib/editor-state";
 import { ref, defineProps, defineEmits, computed } from "vue";
 import { Cursor } from "../lib/path-finder";
 import Vue2AceEditor from "./AceWraper.js";
+import { EditorOptions, IEditorOptions } from "./editor-options";
 
 const props = defineProps<{
   value: string;
@@ -68,16 +71,24 @@ const props = defineProps<{
   grow?: boolean;
   minLines?: number;
   emitOnlyGlobalErrors?: boolean;
+  options?: IEditorOptions;
 }>();
 
+const options = new EditorOptions(props.options, props.emitOnlyGlobalErrors);
+console.log(options);
 const emit = defineEmits<{
   (e: "input", value: string): void;
   (e: "mode", value: "global" | "side"): void;
   (e: "annotations", value: Array<Annotation>): void;
 }>();
 
-let globalState = new EditorGlobalState(props.value, props.paths, props.lang);
-let editorState = ref(new EditorState(globalState));
+let globalState = new EditorGlobalState(
+  props.value,
+  props.paths,
+  props.lang,
+  options.globalOptions
+);
+let editorState = ref(new EditorState(globalState, options.generalOptions));
 
 function inputReceiver(value: string) {
   editorState.value.setModeContent(value);
@@ -90,7 +101,8 @@ function cursorReceiver(cursor: Cursor) {
 }
 
 function annotationsReceiver(annotations: Array<Annotation>) {
-  if (props.emitOnlyGlobalErrors) {
+  if (editorState.value.side) editorState.value.side.annotations = annotations;
+  if (options.emitOnlyGlobalErrors) {
     if (editorState.value.mode == "side") return;
     annotations = annotations.filter((a) => a.type == "error");
   }
@@ -105,6 +117,7 @@ function switchToSide() {
 
 function switchToGlobal(save = true) {
   if (editorState.value.mode == "global") return;
+  if (save && !editorState.value.isSideSavable) return;
   editorState.value.switchToGlobalMode(save);
   emit("mode", editorState.value.mode);
 }
