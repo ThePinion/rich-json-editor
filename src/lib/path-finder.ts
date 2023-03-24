@@ -7,22 +7,24 @@ export interface Cursor {
 }
 
 export class JsonPathElement {
-  value: string | number;
-  constructor(value: string | number) {
-    this.value = value;
+  key: string | number;
+  isArrayOrString: boolean;
+  constructor(key: string | number, isArrayOrString: boolean) {
+    this.key = key;
+    this.isArrayOrString = isArrayOrString;
   }
   toString() {
-    return typeof this.value === "number" ? "[" + this.value + "]" : this.value;
+    return typeof this.key === "number" ? "[" + this.key + "]" : this.key;
   }
 
   toChainedString() {
-    return typeof this.value === "number"
+    return typeof this.key === "number"
       ? this.toString()
       : "." + this.toString();
   }
 
   matches(str: string) {
-    if (str == "[*]" && typeof this.value === "number") return true;
+    if (str == "[*]" && typeof this.key === "number") return true;
     return this.toString() == str;
   }
 }
@@ -37,8 +39,10 @@ export class JsonPath {
     this._elements = elements;
   }
 
-  public push(element: string | number) {
-    this._elements.push(new JsonPathElement(element));
+  public push(identyfier: string | number, valueNode: ValueNode) {
+    this._elements.push(
+      new JsonPathElement(identyfier, isArrayOrString(valueNode))
+    );
   }
 
   public matches(required: Array<string>) {
@@ -75,7 +79,7 @@ function getPathForLocationRecursively(
   if (node.type === "Object") {
     const child = node.children.find((c) => c.loc && inBounds(cursor, c.loc));
     if (!child) return path;
-    path.push(child.key.value);
+    path.push(child.key.value, child.value);
     return getPathForLocationRecursively(cursor, path, child.value);
   }
   if (node.type === "Array") {
@@ -83,7 +87,7 @@ function getPathForLocationRecursively(
       (c) => c.loc && inBounds(cursor, c.loc)
     );
     if (childIndex == -1) return path;
-    path.push(childIndex);
+    path.push(childIndex, node.children[childIndex]);
     return getPathForLocationRecursively(
       cursor,
       path,
@@ -91,6 +95,12 @@ function getPathForLocationRecursively(
     );
   }
   return path;
+}
+
+function isArrayOrString(node: ValueNode) {
+  if (node.type == "Array") return true;
+  if (node.type == "Literal") return typeof node.value == "string";
+  return false;
 }
 
 function inBounds(cursor: Cursor, bounds: Location) {

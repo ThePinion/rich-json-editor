@@ -41,6 +41,11 @@ export class EditorGlobalState {
     } catch {
       return new CurrentPath(undefined);
     }
+    if (
+      currentPath.elements.length == 0 ||
+      !currentPath.elements[currentPath.elements.length - 1].isArrayOrString
+    )
+      return new CurrentPath(currentPath);
 
     const found = this.sidePaths.find((sp) => currentPath.matches(sp.path));
     if (!found) return new CurrentPath(currentPath);
