@@ -133,3 +133,10 @@ function foldAuto(content: string) {
   if (output.length == 1) return output[0];
   return output;
 }
+
+export function foldAutoWithReturnToEqualReplacement(content: string) {
+  let output = foldAuto(content);
+  if (typeof output == "string")
+    output = output.replace("return ", "=").trimStart();
+  return output;
+}

@@ -67,7 +67,7 @@ const jsonContent = ref(`{
       "a": ["   if (c === 0) return 0;", "    return 1"]
     },
     {
-      "a": "return 0"
+      "a": "=0"
     }
   ],
   "any": {

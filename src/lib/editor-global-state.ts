@@ -1,5 +1,6 @@
 import {
   arrayToString,
+  foldAutoWithReturnToEqualReplacement,
   SidePath,
   SidePathDefinition,
   toSidePathArray,
@@ -79,7 +80,30 @@ export class EditorGlobalState {
   }
 
   public getSideState(sidePath: SidePath): EditorSideState {
-    return new EditorSideState(this.getSideContent(sidePath), sidePath);
+    const content = this.getSideContent(sidePath);
+    if (this.shouldReplaceEqualWithReturn(content, sidePath))
+      return this.getSideStateEqualReplacement(content, sidePath);
+    return new EditorSideState(content, sidePath);
+  }
+
+  private getSideStateEqualReplacement(
+    content: string,
+    sidePath: SidePath
+  ): EditorSideState {
+    content = content.trimStart().replace("=", "  return ");
+    sidePath.folding = foldAutoWithReturnToEqualReplacement;
+    return new EditorSideState(content, sidePath);
+  }
+
+  private shouldReplaceEqualWithReturn(content: string, sidePath: SidePath) {
+    const trimmed = content.trimStart();
+    return (
+      this.options.jsReplaceLeadingEqualWithReturn &&
+      sidePath.lang == "javascript" &&
+      trimmed.length > 0 &&
+      trimmed[0] == "=" &&
+      trimmed.indexOf("\n") == -1
+    );
   }
 
   public saveSideState(sideState: EditorSideState) {
@@ -95,4 +119,5 @@ export class EditorGlobalState {
 
 export interface EditorGlobalStateOptions {
   tabSize: number;
+  jsReplaceLeadingEqualWithReturn: boolean;
 }
