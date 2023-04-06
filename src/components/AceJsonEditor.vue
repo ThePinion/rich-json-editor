@@ -88,13 +88,7 @@ let editorState = ref(new EditorState(globalState, options.generalOptions));
 watch(
   () => props.value,
   (newValue) => {
-    let oldValue = editorState.value.global.content;
-    if (newValue === oldValue) return;
-    // Upon modelValue change the editor is forced back into the global mode.
-    // All unsaved side changes are lost.
-    // Different mechanics would lead to a non-intuitive behaviour.
-    globalState = createGlobalState();
-    editorState.value = new EditorState(globalState, options.generalOptions);
+    editorState.value.forceChangeGlobalContent(newValue);
   }
 );
 

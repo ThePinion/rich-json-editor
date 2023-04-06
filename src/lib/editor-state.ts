@@ -51,13 +51,26 @@ export class EditorState {
     if (!this.side)
       throw "EDITOR: Must be in side mode to switch to global mode!";
 
-    const sideState = this.side;
     if (save) {
       if (!this.isSideSavable) throw "EDITOR: Side is currently not savable!";
-      this.global.saveSideState(sideState);
+      this.global.saveSideState(this.side);
     }
     this.content = this.global.content;
     this.side = null;
+  }
+
+  public forceChangeGlobalContent(newContent: string) {
+    if (!this.options.modelValueChange.allow) {
+      console.warn(
+        "Editor model value changed but it's not allowed! Content not affected."
+      );
+      return;
+    }
+    if (newContent === this.global.content) return;
+    this.global.content = newContent;
+    if (this.mode == "side" && this.options.modelValueChange.switchToGlobal)
+      this.switchToGlobalMode(false);
+    if (this.mode == "global") this.content = newContent;
   }
 
   public setModeContent(value: string) {
@@ -96,4 +109,10 @@ export class CurrentPath {
 
 export interface EditorStateOptions {
   onlySaveValidSide: boolean;
+  modelValueChange: ModelValueChangeOptions;
+}
+
+export interface ModelValueChangeOptions {
+  allow: boolean;
+  switchToGlobal: boolean;
 }
