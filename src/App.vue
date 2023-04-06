@@ -10,6 +10,15 @@
       @annotations="logAnnotations"
       :options="{ onlySaveValidSide: true }"
     />
+    {{ jsonContent }}
+    <AceJsonEditor
+      v-model="jsonContent"
+      :paths="paths"
+      @mode="(e) => (isGlobal = e == 'global')"
+      style="height: 400px"
+      @annotations="logAnnotations"
+      :options="{ onlySaveValidSide: true }"
+    />
 
     <p>SqlServer mode. Growable editor.</p>
     <AceJsonEditor v-model="sqlContent" lang="sqlserver" grow />

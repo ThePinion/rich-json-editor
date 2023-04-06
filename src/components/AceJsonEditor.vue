@@ -59,7 +59,7 @@ import { Annotation } from "@/lib/annotation";
 import { EditorGlobalState, RICH_JSON } from "@/lib/editor-global-state";
 import { SidePathDefinition } from "@/lib/editor-side-path";
 import { EditorState } from "@/lib/editor-state";
-import { ref, defineProps, defineEmits, computed } from "vue";
+import { ref, defineProps, defineEmits, computed, watch } from "vue";
 import { Cursor } from "../lib/path-finder";
 import Vue2AceEditor from "./AceWraper.js";
 import { EditorOptions, IEditorOptions } from "./editor-options";
@@ -82,13 +82,30 @@ const emit = defineEmits<{
   (e: "annotations", value: Array<Annotation>): void;
 }>();
 
-let globalState = new EditorGlobalState(
-  props.value,
-  props.paths,
-  props.lang,
-  options.globalOptions
-);
+let globalState = createGlobalState();
 let editorState = ref(new EditorState(globalState, options.generalOptions));
+
+watch(
+  () => props.value,
+  (newValue) => {
+    let oldValue = editorState.value.global.content;
+    if (newValue === oldValue) return;
+    // Upon modelValue change the editor is forced back into the global mode.
+    // All unsaved side changes are lost.
+    // Different mechanics would lead to a non-intuitive behaviour.
+    globalState = createGlobalState();
+    editorState.value = new EditorState(globalState, options.generalOptions);
+  }
+);
+
+function createGlobalState() {
+  return new EditorGlobalState(
+    props.value,
+    props.paths,
+    props.lang,
+    options.globalOptions
+  );
+}
 
 function inputReceiver(value: string) {
   editorState.value.setModeContent(value);
